@@ -1,0 +1,24 @@
+{
+  "name": "@autotest/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev -p 3030",
+    "build": "next build",
+    "start": "next start -p 3030",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "lucide-react": "^0.544.0",
+    "nanoid": "5.0.7",
+    "next": "14.2.5",
+    "react": "18.2.0",
+    "react-dom": "18.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "18.2.73",
+    "@types/react-dom": "18.2.23"
+  }
+}

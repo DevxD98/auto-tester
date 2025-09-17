@@ -1,0 +1,26 @@
+{
+  "name": "@autotest/cli",
+  "version": "0.1.0",
+  "private": true,
+  "bin": {
+    "autotest": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "dev": "ts-node src/index.ts"
+  },
+  "dependencies": {
+  "@autotest/core": "workspace:*",
+  "@autotest/crawler": "workspace:*",
+  "@autotest/generator": "workspace:*",
+  "@autotest/ai": "workspace:*",
+  "@autotest/runner": "workspace:*",
+  "@autotest/reporting": "workspace:*",
+    "yargs": "^17.7.2"
+  },
+  "devDependencies": {
+  "ts-node": "^10.9.2",
+  "@types/yargs": "^17.0.33"
+  }
+}

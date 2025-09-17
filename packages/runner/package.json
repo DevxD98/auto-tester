@@ -1,0 +1,17 @@
+{
+  "name": "@autotest/runner",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint 'src/**/*.{ts,tsx}'",
+    "test": "vitest run"
+  },
+  "dependencies": {
+  "@autotest/core": "workspace:*",
+  "playwright": "^1.47.0"
+  },
+  "devDependencies": {}
+}

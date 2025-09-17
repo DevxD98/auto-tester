@@ -1,0 +1,70 @@
+[
+  {
+    "id": "zM8WpIPPoqXMv8sHwRERi",
+    "name": "Form submission happy path (The Internet)",
+    "requirementRefs": [
+      "UlHqkhYWdYF1UZVMxvv8E"
+    ],
+    "pageModelId": "KSWLCMv1wTjDBTNubB-d1",
+    "steps": [
+      {
+        "description": "Enter value for password",
+        "action": "fill",
+        "targetElementId": "xOZm_uzVQ3_pwqLdCJ1xq",
+        "inputData": "P@ssw0rd!"
+      },
+      {
+        "description": "Enter value for username",
+        "action": "fill",
+        "targetElementId": "Tq4iLZAvmLb7lAtr0u-mn",
+        "inputData": "value"
+      },
+      {
+        "description": "Submit form (heuristic: first button)",
+        "action": "click",
+        "targetElementId": "fp7_hrBssNrU4WPRQUu-W"
+      }
+    ],
+    "negative": false,
+    "priority": "medium",
+    "tags": [
+      "heuristic",
+      "form"
+    ]
+  },
+  {
+    "id": "WFA7ezbMQumLfyUl7JRHw",
+    "name": "Form missing required field (password)",
+    "requirementRefs": [
+      "UlHqkhYWdYF1UZVMxvv8E"
+    ],
+    "pageModelId": "KSWLCMv1wTjDBTNubB-d1",
+    "steps": [
+      {
+        "description": "Enter value for password",
+        "action": "fill",
+        "targetElementId": "xOZm_uzVQ3_pwqLdCJ1xq",
+        "inputData": ""
+      },
+      {
+        "description": "Enter value for username",
+        "action": "fill",
+        "targetElementId": "Tq4iLZAvmLb7lAtr0u-mn",
+        "inputData": "value"
+      },
+      {
+        "description": "Submit form",
+        "action": "click",
+        "targetElementId": "fp7_hrBssNrU4WPRQUu-W",
+        "expected": "Validation error displayed"
+      }
+    ],
+    "negative": true,
+    "priority": "medium",
+    "tags": [
+      "heuristic",
+      "form",
+      "negative"
+    ]
+  }
+]

@@ -1,0 +1,32 @@
+{
+  "name": "autotest-ai-monorepo",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@9.0.0",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "pnpm -r run build",
+    "dev": "pnpm --filter @autotest/web run dev",
+    "lint": "eslint . --ext .ts,.tsx",
+    "typecheck": "pnpm -r run typecheck",
+    "test": "pnpm -r run test",
+    "postinstall": "playwright install chromium || true"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/react": "18.2.73",
+    "@types/react-dom": "18.2.23",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint": "^8.57.0",
+    "prettier": "^3.2.5",
+    "typescript": "^5.4.0",
+    "vitest": "^1.5.0"
+  },
+  "dependencies": {
+    "pdf-lib": "^1.17.1"
+  }
+}
