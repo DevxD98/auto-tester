@@ -1,0 +1,16 @@
+%% DFD-0 (Context Diagram) — TestFlowAI
+%% Caption: DFD-0: Context of TestFlowAI
+
+flowchart LR
+  User([Tester/User])
+  AI[[AI Provider]]
+  Site[[Website Under Test]]
+  Art[(Artifacts Store)]
+  System((TestFlowAI))
+
+  User -- Run Config / View Report --> System
+  System -- Web Report / PDF / CSV --> User
+
+  System <-- Prompts / Responses --> AI
+  System <-- Page Loads / DOM / Routes --> Site
+  System -- Screenshots / Logs --> Art

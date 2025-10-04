@@ -38,7 +38,7 @@ export interface OrchestratorSummary {
   testsGenerated: number;
   testsPassed: number;
   testsFailed: number;
-  coverage: string;
+  coverage: any; // Step 2: structured coverage object
   screenshots: string[];
   finishedAt: number;
 }
@@ -137,6 +137,51 @@ export async function startRun(runId: string, config: OrchestratorConfig, emit: 
       push({ type: 'phase', phase: 'generate', message: `Deduplicated ${before - deduped.length} duplicate navigation tests`, runId, timestamp: Date.now() });
     }
     tests = deduped;
+    // --- Step 2: coverage metrics (static from crawl/tests) -----------------
+    const pagesFound = crawlResult.pages.length;
+    const pageById = new Map(crawlResult.pages.map(p => [p.id, p] as const));
+    const pagesTestedSet = new Set<string>();
+    const clickTargets = new Set<string>();
+    let formsFound = 0;
+    let formsFilled = 0;
+    // formsFound: prefer actual <form> count; fallback to pages with inputs
+    for (const p of crawlResult.pages) {
+      const formCount = p.elements.filter((e: any) => e.tag === 'form').length;
+      if (formCount > 0) formsFound += formCount; else {
+        const hasInputs = p.elements.some((e: any) => e.tag === 'input');
+        if (hasInputs) formsFound += 1; // coarse fallback
+      }
+    }
+    for (const t of tests) {
+      if ((t as any).pageModelId) pagesTestedSet.add((t as any).pageModelId);
+      const steps = (t as any).steps || [];
+      for (const s of steps) {
+        if (s.action === 'click' && s.targetElementId) clickTargets.add(s.targetElementId);
+        if (s.action === 'upload') formsFilled += 1; // proxy for form interaction
+      }
+      // If tagged as form, also count as filled
+      const tags = (t as any).tags || [];
+      if (Array.isArray(tags) && (tags.includes('form') || tags.includes('upload'))) formsFilled += 1;
+    }
+    const pagesTested = pagesTestedSet.size;
+    // routesHit: distinct page URLs referenced by tests
+    const routesSet = new Set<string>();
+    for (const id of pagesTestedSet) {
+      const p = pageById.get(id);
+      if (p?.url) routesSet.add(p.url);
+    }
+    const percentPages = pagesFound > 0 ? Math.round((pagesTested / pagesFound) * 100) : 0;
+    const percentForms = formsFound > 0 ? Math.round((Math.min(formsFilled, formsFound) / formsFound) * 100) : 0;
+    const coverageObj = {
+      pagesFound,
+      pagesTested,
+      percentPages,
+      formsFound,
+      formsFilled: Math.min(formsFilled, formsFound),
+      percentForms,
+      routesHit: routesSet.size,
+      clickableTouched: clickTargets.size
+    };
     // If user uploaded assets, generate simple upload tests for pages with file inputs
     if (config.assets && config.assets.length) {
       for (const page of crawlResult.pages) {
@@ -244,7 +289,7 @@ export async function startRun(runId: string, config: OrchestratorConfig, emit: 
     if (total === 0) {
       throw new Error('No tests generated');
     }
-  const summary: OrchestratorSummary = { testsGenerated: total, testsPassed: passed, testsFailed: failed, coverage: 'N/A', screenshots, finishedAt: Date.now() };
+  const summary: OrchestratorSummary = { testsGenerated: total, testsPassed: passed, testsFailed: failed, coverage: coverageObj, screenshots, finishedAt: Date.now() };
   record.status = 'completed';
     record.results = summary; record.updatedAt = Date.now();
   record.testResults = perTestResults;

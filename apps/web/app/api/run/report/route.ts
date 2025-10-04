@@ -111,6 +111,81 @@ DATA:\n${JSON.stringify(ctx, null, 2)}`;
     aiMd = summarizeRun(testResults, tests);
   }
 
+  // --- Step 1 metrics ------------------------------------------------------
+  // Map result status by testId for quick lookup
+  const statusById = new Map<string, string>();
+  for (const r of testResults) statusById.set(r.testId, r.status);
+
+  // Helper: categorize test into coarse types for v1
+  const cat = (name: string, tags: string[] = []): 'functional'|'negative'|'boundary'|'security' => {
+    const lower = name.toLowerCase();
+    const t = new Set(tags.map(t => t.toLowerCase()));
+    if (t.has('security') || /xss|csrf|injection|auth|unauthor/i.test(lower)) return 'security';
+    if (t.has('negative') || /invalid|error|fail|unauthor/i.test(lower)) return 'negative';
+    if (t.has('boundary') || /boundary|max|min|empty|long|overflow|edge/i.test(lower)) return 'boundary';
+    return 'functional';
+  };
+
+  type Counts = { total: number; passed: number; failed: number };
+  const makeCounts = (): Counts => ({ total: 0, passed: 0, failed: 0 });
+  const byType: Record<'functional'|'negative'|'boundary'|'security', Counts> = {
+    functional: makeCounts(), negative: makeCounts(), boundary: makeCounts(), security: makeCounts()
+  };
+  let heuristicTotal = 0, aiTotal = 0, heuristicPassed = 0, aiPassed = 0;
+
+  for (const t of tests) {
+    const tags = (t as any).tags || [];
+    const type = cat(t.name || '', tags);
+    const status = statusById.get((t as any).id) || 'unknown';
+    const bucket = byType[type];
+    bucket.total++;
+    if (status === 'passed') bucket.passed++; else if (status === 'failed') bucket.failed++;
+
+    const isHeuristic = Array.isArray(tags) && tags.includes('heuristic');
+    if (isHeuristic) {
+      heuristicTotal++; if (status === 'passed') heuristicPassed++;
+    } else {
+      aiTotal++; if (status === 'passed') aiPassed++;
+    }
+  }
+
+  const durationMs = Math.max(0, (results.finishedAt || Date.now()) - record.createdAt);
+  const totals = {
+    tests: results.testsGenerated || tests.length,
+    passed: results.testsPassed || heuristicPassed + aiPassed,
+    failed: results.testsFailed || Math.max(0, (results.testsGenerated || tests.length) - (results.testsPassed || heuristicPassed + aiPassed)),
+    durationMs,
+    passRate: (results.testsGenerated || tests.length) > 0 ? Math.round(((results.testsPassed || heuristicPassed + aiPassed) / (results.testsGenerated || tests.length)) * 100) : 0
+  };
+
+  const comparison = {
+    heuristic: { total: heuristicTotal, passed: heuristicPassed, failed: Math.max(0, heuristicTotal - heuristicPassed) },
+    ai: { total: aiTotal, passed: aiPassed, failed: Math.max(0, aiTotal - aiPassed) },
+    overlap: 0, // not tracked yet
+    lift: aiTotal > 0 ? Math.max(0, aiPassed - heuristicPassed) : 0
+  };
+
+  // Simple AI rationale synthesis without external calls
+  const aiRationale = record.aiGeneration?.used
+    ? `AI generated ${comparison.ai.total} test${comparison.ai.total===1?'':'s'} targeting functional coverage; pass rate ${(comparison.ai.total?Math.round((comparison.ai.passed/comparison.ai.total)*100):0)}%.`
+    : 'AI generation not used in this run.';
+
+  // Recommendations (Step 2): simple rules based on coverage metrics
+  const recs: { title: string; rationale: string; impact: 'high'|'med'|'low' }[] = [];
+  const cov = (results.coverage || {}) as any;
+  if (typeof cov.percentPages === 'number' && cov.percentPages < 60) {
+    recs.push({ title: 'Increase page coverage', rationale: `Only ${cov.percentPages}% of discovered pages were exercised (${cov.pagesTested}/${cov.pagesFound}).`, impact: 'high' });
+  }
+  if (typeof cov.percentForms === 'number' && cov.percentForms < 70 && cov.formsFound > 0) {
+    recs.push({ title: 'Exercise forms more thoroughly', rationale: `Only ${cov.percentForms}% of forms were filled (${cov.formsFilled}/${cov.formsFound}).`, impact: 'high' });
+  }
+  if (typeof cov.clickableTouched === 'number' && cov.clickableTouched < 5) {
+    recs.push({ title: 'Low interaction depth', rationale: 'Few clickable elements were interacted with; add navigation/interaction tests.', impact: 'med' });
+  }
+  if (comparison.ai.total === 0 && record.aiGeneration?.used) {
+    recs.push({ title: 'AI generated no executable tests', rationale: 'AI was enabled but produced 0 runnable tests; check provider/model and page complexity.', impact: 'med' });
+  }
+
   // Minimal metadata block to help rendering and export
   const report = {
     runId,
@@ -121,7 +196,13 @@ DATA:\n${JSON.stringify(ctx, null, 2)}`;
     ai: { used: aiUsed, provider: aiProvider, model: aiModel, debug: !aiUsed ? { groqStatus: groq.status, groqError: groq.error } : undefined },
     aiGeneration: record.aiGeneration || { used: false },
     markdown: aiMd,
-    screenshots: results.screenshots
+    screenshots: results.screenshots,
+    // step1 additions
+    totals,
+    byType,
+    comparison,
+    aiRationale,
+    recommendations: recs
   };
 
   return NextResponse.json(report);

@@ -1,0 +1,79 @@
+%% ER Diagram — TestFlowAI (Logical Model)
+%% Render with Mermaid (VS Code Mermaid extension or mermaid.cli)
+%% Caption: ER Diagram of core entities
+
+erDiagram
+  USER ||--o{ RUN : owns
+  RUN ||--o{ TESTCASE : includes
+  TESTCASE ||--o{ STEP : has
+  STEP ||--o{ SCREENSHOT : captures
+  STEP ||--o{ EVIDENCE : logs
+  PROVIDER ||--o{ MODEL : offers
+
+  USER {
+    string userId
+    string name
+    string email
+  }
+
+  RUN {
+    string runId
+    string url
+    string status
+    datetime startedAt
+    datetime finishedAt
+    int tests
+    int passed
+    int failed
+    boolean aiUsed
+    string provider
+    string model
+  }
+
+  TESTCASE {
+    string testId
+    string runId
+    string name
+    string type
+    string priority
+    string status
+    int durationMs
+    string source
+  }
+
+  STEP {
+    string stepId
+    string testId
+    int index
+    string action
+    string selectorHint
+    string expected
+    string actual
+    string status
+    datetime timestamp
+  }
+
+  SCREENSHOT {
+    string shotId
+    string stepId
+    string url
+    datetime capturedAt
+  }
+
+  EVIDENCE {
+    string evidenceId
+    string stepId
+    string kind
+    string ref
+  }
+
+  PROVIDER {
+    string providerId
+    string name
+  }
+
+  MODEL {
+    string modelId
+    string providerId
+    string name
+  }

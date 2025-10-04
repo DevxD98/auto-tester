@@ -1,0 +1,31 @@
+%% DFD-1 (Top-level Flow) — TestFlowAI
+%% Caption: DFD-1: Core processes and data stores
+
+flowchart LR
+  subgraph External
+    User([Tester/User])
+    AI[[AI Provider]]
+    Site[[Website Under Test]]
+  end
+
+  subgraph Stores
+    Runs[(Runs DB)]
+    Arts[(Artifacts Store)]
+    Cov[(Coverage Index)]
+  end
+
+  P1[Accept Run Config]
+  P2[Crawl & Discover]
+  P3[Generate Tests (Heuristic + AI)]
+  P4[Execute Tests]
+  P5[Capture Evidence]
+  P6[Analyze & Summarize]
+  P7[Serve Report]
+
+  User -->|Run Config| P1 --> P2 --> P3 --> P4 --> P6 --> P7 -->|Report| User
+  P3 <-->|Prompts/Responses| AI
+  P4 -->|Page Loads| Site
+  P5 --> Arts
+  P4 --> P5
+  P2 -->|Pages/Forms/Routes| Cov
+  P6 -->|KPIs/Coverage/Comparison| Runs

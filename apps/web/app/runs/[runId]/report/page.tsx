@@ -94,10 +94,16 @@ export default function ReportPage({ params }: { params: { runId: string } }) {
     <div className="container">
       <div className="card">
         <div className="card-header">
-          <h1 className="card-title flex items-center gap-2">
-            <FileText size={20} className="text-blue-500" />
-            Test Report
-          </h1>
+          <div className="flex items-center justify-between">
+            <h1 className="card-title flex items-center gap-2">
+              <FileText size={20} className="text-blue-500" />
+              Test Report
+            </h1>
+            <div className="flex items-center gap-2">
+              <a href={`/api/run/report/pdf?runId=${runId}`} className="btn btn-secondary">⬇️ Download PDF</a>
+              <a href={`/api/run/report/csv?runId=${runId}`} className="btn btn-secondary">⬇️ Download CSV</a>
+            </div>
+          </div>
           <p className="text-sm text-gray-500">If AI shows as not used, verify your keys at <a className="underline" href="/api/ai/check" target="_blank">/api/ai/check</a> (Groq, Gemini, or Hugging Face).</p>
         </div>
         <div className="card-body">
@@ -105,6 +111,84 @@ export default function ReportPage({ params }: { params: { runId: string } }) {
           {error && <div className="status-badge status-failed">{error}</div>}
           {report && (
             <div className="space-y-4">
+              {/* KPIs removed per request */}
+
+              {/* By Type */}
+              {report.byType && (
+                <div className="grid grid-cols-4 gap-3">
+                  {(['functional','negative','boundary','security'] as const).map((k) => (
+                    <div key={k} className="card">
+                      <div className="card-body">
+                        <div className="text-sm text-gray-600 capitalize">{k}</div>
+                        <div className="mt-2 flex items-baseline gap-3">
+                          <div className="text-xl font-semibold text-gray-800">{report.byType[k]?.total ?? 0}</div>
+                          <div className="text-xs text-green-600">{report.byType[k]?.passed ?? 0}✓</div>
+                          <div className="text-xs text-red-600">{report.byType[k]?.failed ?? 0}✗</div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Heuristic vs AI */}
+              {report.comparison && (
+                <div className="card">
+                  <div className="card-body">
+                    <h3 className="text-base font-semibold text-gray-800 mb-2">Heuristic vs AI</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      {(['heuristic','ai'] as const).map((k) => (
+                        <div key={k} className="bg-gray-50 rounded border p-3">
+                          <div className="text-sm text-gray-600 capitalize">{k}</div>
+                          <div className="mt-1 flex items-center gap-3">
+                            <span className="text-lg font-semibold text-gray-900">{report.comparison[k]?.total ?? 0}</span>
+                            <span className="text-xs text-green-600">{report.comparison[k]?.passed ?? 0}✓</span>
+                            <span className="text-xs text-red-600">{report.comparison[k]?.failed ?? 0}✗</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {typeof report.comparison.lift === 'number' && (
+                      <div className="text-xs text-gray-600 mt-2">Lift (AI additional passes vs heuristic): <span className="font-medium">{report.comparison.lift}</span></div>
+                    )}
+                    {report.aiRationale && (
+                      <div className="text-sm text-gray-700 mt-3">{report.aiRationale}</div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Coverage */}
+              {report.coverage && (
+                <div className="card">
+                  <div className="card-body">
+                    <h3 className="text-base font-semibold text-gray-800 mb-2">Coverage</h3>
+                    <div className="grid grid-cols-4 gap-3">
+                      <div className="bg-gray-50 rounded border p-3">
+                        <div className="text-xs text-gray-600">Pages Tested</div>
+                        <div className="text-lg font-semibold text-gray-900">{report.coverage.pagesTested}/{report.coverage.pagesFound}</div>
+                        <div className="text-xs text-purple-600 mt-1">{report.coverage.percentPages}%</div>
+                      </div>
+                      <div className="bg-gray-50 rounded border p-3">
+                        <div className="text-xs text-gray-600">Forms Filled</div>
+                        <div className="text-lg font-semibold text-gray-900">{report.coverage.formsFilled}/{report.coverage.formsFound}</div>
+                        <div className="text-xs text-purple-600 mt-1">{report.coverage.percentForms}%</div>
+                      </div>
+                      <div className="bg-gray-50 rounded border p-3">
+                        <div className="text-xs text-gray-600">Routes Hit</div>
+                        <div className="text-lg font-semibold text-gray-900">{report.coverage.routesHit}</div>
+                      </div>
+                      <div className="bg-gray-50 rounded border p-3">
+                        <div className="text-xs text-gray-600">Clickable Touched</div>
+                        <div className="text-lg font-semibold text-gray-900">{report.coverage.clickableTouched}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Recommendations removed to avoid duplication with Markdown summary */}
+
               <div className="flex items-center gap-3 justify-end mb-2">
                 {report.ai && (
                   <span className={`status-badge ${report.ai.used ? 'status-ready' : 'status-idle'}`} title={report.ai.used ? `AI: ${report.ai.provider} (${report.ai.model})` : 'AI disabled or unavailable'}>
@@ -116,8 +200,7 @@ export default function ReportPage({ params }: { params: { runId: string } }) {
                     {report.aiGeneration.used ? `AI gen: ${report.aiGeneration.provider || 'unknown'} (${report.aiGeneration.model || ''})` : 'AI gen: not used'}
                   </span>
                 )}
-                <a href={`/api/run/report/pdf?runId=${runId}`} className="btn btn-secondary">⬇️ Download PDF</a>
-                <a href={`/api/run/report/csv?runId=${runId}`} className="btn btn-secondary">⬇️ Download CSV</a>
+                {/* Download buttons moved to header */}
               </div>
               <div className="bg-white rounded-lg border border-gray-200 p-6 shadow-sm">
                 <Markdown md={report.markdown || 'No summary available.'} />

@@ -1,0 +1,25 @@
+@startuml
+' Use-Case Diagram — TestFlowAI
+' Caption: Use-Case Diagram of TestFlowAI
+left to right direction
+actor "Tester" as U
+actor "CI/CD" as CI
+rectangle TestFlowAI {
+  usecase "Configure Test Run" as UC1
+  usecase "Start Test Run" as UC2
+  usecase "View Live Execution" as UC3
+  usecase "View AI Report" as UC5
+  usecase "Export PDF/CSV" as UC6
+  usecase "Review Evidence" as UC7
+  usecase "Manage History" as UC8
+}
+U --> UC1
+U --> UC2
+U --> UC3
+U --> UC5
+U --> UC6
+U --> UC7
+U --> UC8
+CI --> UC2
+UC2 .> UC3 : includes
+@enduml

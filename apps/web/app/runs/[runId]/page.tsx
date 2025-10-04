@@ -204,6 +204,24 @@ export default function LiveRunPage() {
 
   const progressPercentage = totalSteps > 0 ? (currentStep / totalSteps) * 100 : 0;
 
+  // Normalize coverage display from results.coverage which may be an object or primitive
+  const coverageStat: string = (() => {
+    const c = results?.coverage as any;
+    if (c === null || c === undefined) return '—';
+    if (typeof c === 'string') return c; // already formatted, e.g., "98%"
+    if (typeof c === 'number') return `${c}%`;
+    if (typeof c === 'object') {
+      // Prefer page coverage; fallback to forms; else compute from counts
+      const pct = c.percentPages ?? c.percent ?? c.percentForms;
+      if (typeof pct === 'number') return `${pct}%`;
+      const pagesFound = Number(c.pagesFound ?? 0);
+      const pagesTested = Number(c.pagesTested ?? 0);
+      if (pagesFound > 0) return `${Math.round((pagesTested / pagesFound) * 100)}%`;
+      return '—';
+    }
+    return '—';
+  })();
+
   return (
     <div className="container">
       {/* Header Card */}
@@ -258,7 +276,7 @@ export default function LiveRunPage() {
                   <div className="text-sm text-red-600">Tests Failed</div>
                 </div>
                 <div className="stat-card bg-purple-50 border-purple-200">
-                  <div className="text-2xl font-bold text-purple-600">{results.coverage || '98%'}</div>
+                  <div className="text-2xl font-bold text-purple-600">{coverageStat}</div>
                   <div className="text-sm text-purple-600">Coverage</div>
                 </div>
               </div>

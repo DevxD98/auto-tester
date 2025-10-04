@@ -1,0 +1,51 @@
+%% filepath: /Users/devmondal/testtttterr/docs/ch4-figures/ER-visual.mmd
+flowchart TB
+
+  %% Entities (rectangles)
+  User[User]
+  Run[Run]
+  TestCase[TestCase]
+  Step[Step]
+  Artifact[Artifact]
+
+  %% Relationship diamonds
+  R1{starts}
+  R2{contains}
+  R3{composed of}
+  R4{produces}
+
+  %% Cardinalities (labels on edges)
+  User -->|1| R1
+  R1 -->|N| Run
+
+  Run -->|1| R2
+  R2 -->|N| TestCase
+
+  TestCase -->|1| R3
+  R3 -->|N| Step
+
+  Step -->|0..N| R4
+  R4 -->|N| Artifact
+
+  %% Minimal attributes (ovals)
+  user_id((user_id)) --> User
+  user_name((name)) --> User
+
+  run_id((run_id)) --> Run
+  run_url((url)) --> Run
+  run_status((status)) --> Run
+  run_started((started_at)) --> Run
+  run_finished((finished_at)) --> Run
+
+  tc_id((test_id)) --> TestCase
+  tc_name((name)) --> TestCase
+  tc_type((type)) --> TestCase
+  tc_status((status)) --> TestCase
+
+  step_id((step_id)) --> Step
+  step_action((action)) --> Step
+  step_status((status)) --> Step
+
+  art_id((artifact_id)) --> Artifact
+  art_kind((kind: screenshot|console|network)) --> Artifact
+  art_ref((ref/url)) --> Artifact
